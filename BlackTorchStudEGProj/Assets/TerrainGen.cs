@@ -1,59 +1,102 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.IO;
+using UnityEngine.UI;
 
-public class TerrainGen : MonoBehaviour {
+public class TerrainGen : MonoBehaviour
+{
 
-    public GameObject[,] terrainArray;
-    GameObject currentBlock;
+    public int[,] terrainArray;
 
-    public GameObject dirt;
-    public GameObject rock;
-    public GameObject grass;
-    public GameObject mineral;
+    Texture2D image;
 
-    int minX = -16;
-    int maxX = 16;
-    int minY = -16;
-    int maxY = 16;
+    public InputField width;
+    public InputField height;
 
-    Perlin perlinNoise;
+    int minX = 0;
+    int maxX = 192;
+    int minY = 0;
+    int maxY = 108;
 
-	// Use this for initialization
-	void Start ()
+    Color brown = new Color(0.533333f, 0.419608f, 0.184314f);
+
+
+    // Use this for initialization
+    void Start()
     {
-        perlinNoise = new Perlin(Random.Range(1000000, 100000000));
-        GridGen();
-	}
-	
-	// Update is called once per frame
-	void Update ()
-    {
-	
-	}
 
-    private void GridGen()
+    }
+
+    // Update is called once per frame
+    void Update()
     {
-        float width = dirt.transform.localScale.x;
-        float height = dirt.transform.localScale.y;
+
+    }
+
+    public void GridGen()
+    {
+        image = new Texture2D(maxX, maxY);
+
+        for (int x = 0; x < image.width; x++)
+        {
+            for (int y = 0; y < image.height; y++)
+            {
+                image.SetPixel(x, y, Color.blue);
+            }
+
+        }
+
+        float colHeight = maxY / 2;
 
         for (int x = minX; x < maxX; x++)
         {
-            int colHeight = 2 + perlinNoise.GetNoise(x - minX, maxY - minY - 2);
+
+            colHeight += (Perlin.Noise(Random.Range(-0.5f, 0.5f)));
             for (int y = minY; y < minY + colHeight; y++)
             {
-                GameObject block = dirt;
-                if ((y == minY + colHeight - 1))
+                if (((y <= minY + colHeight - 1) && y > ((colHeight / 4) * 3)))
                 {
-                    block = grass;
+                    image.SetPixel(x, y, Color.green);
                 }
-                if (y == minY + colHeight)
+
+                if (y < ((colHeight / 4) * 3) && y > (minY + colHeight - 1) / 2)
                 {
-                    block = rock;
+                    image.SetPixel(x, y, brown);
                 }
-                
-                Instantiate(block, new Vector2(x /** width*/, y /** height*/), Quaternion.identity);
+
+
+
+                if (y > minY && y < (minY + colHeight - 1) / 2)
+                {
+                    image.SetPixel(x, y, Color.grey);
+                    if (x % 12 == 0 && y > minY + (maxY / 12))
+                    {
+                        int yes = (int)Random.Range(0, 100);
+                        if (yes > 50)
+                        {
+                            image.SetPixel(x, y, Color.magenta);
+                        }
+                    }
+                }
 
             }
         }
+        byte[] nibble = image.EncodeToPNG();
+        Object.Destroy(image);
+
+        File.WriteAllBytes(Application.dataPath + "SAVEDIMAGE.png", nibble);
     }
+
+    public void SetWidth()
+    {
+        maxX = int.Parse(width.text);
+        Debug.Log(maxX.ToString());
+    }
+
+    public void SetHeight()
+    {
+        maxY = int.Parse(height.text);
+        Debug.Log(maxY.ToString());
+    }
+
 }
